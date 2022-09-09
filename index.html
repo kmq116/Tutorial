@@ -1,0 +1,123 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8"/>
+    <meta http-equiv="X-UA-Compatible" content="IE=edge"/>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+    <title>Document</title>
+</head>
+
+<body>
+<div id="app" title="123123123">123123
+    {{ message }}
+    {{msg}}
+</div>
+<div id="app-2">
+      <span v-bind:title="message">
+        鼠标悬停几秒钟查看此处动态绑定的提示信息！
+      </span>
+</div>
+<div id="app-3">
+    <div v-if="seen">
+        123123
+        <div>dsadas</div>
+    </div>
+</div>
+</body>
+<script>
+    function directive(el, vm) {
+        const targetAttrs = Array.from(el.attributes);
+        targetAttrs.forEach((item) => {
+            if (item.name.includes("v-if")) {
+                vifDirective(el, vm);
+            }
+            if (item.name.includes("v-bind")) {
+                vBindDirective({el, attr: item}, vm);
+            }
+        });
+        if (el.childElementCount) {
+            const child = Array.from(el.children);
+            child.forEach((e) => {
+                directive(e, vm);
+            });
+        }
+        replaceMustache(el, vm);
+    }
+
+    function replaceMustache(el, vm) {
+        const mustacheRe = /\{\{((?:.|\n)+?)\}\}/g
+        const matchResult = el.textContent.match(mustacheRe);
+        if (matchResult) {
+            console.log(matchResult)
+            matchResult.forEach(text => {
+                const reg = /\{\{(.*)\}\}/g
+                const key = reg.exec(text)[1].trim()
+                el.textContent = el.textContent.replace(text, vm.data[key])
+            })
+        }
+    }
+
+    function vifDirective(el, vm) {
+        const key = el.getAttribute("v-if");
+        const val = vm.data[key];
+        if (!val) {
+            el.parentElement.removeChild(el);
+        }
+    }
+
+    function vBindDirective({el, attr}, vm) {
+        const key = attr.name.split(":")[1];
+        const valKey = attr.value;
+        el.setAttribute(key, vm.data[valKey]);
+        el.removeAttribute(attr.name);
+    }
+
+    function Vue({el, data}) {
+        const _el = document.getElementById(el.slice(1));
+        const vm = {
+            el: _el,
+            data,
+        };
+        const target = _el;
+        // const targetAttrs = Array.from(target.attributes);
+        directive(vm.el, vm);
+
+        // const mustacheRe = /\{\{(.*)\}\}/;
+        // const matchResult = target.textContent.match(mustacheRe);
+        // if (matchResult) {
+        //   const key = target.textContent.match(mustacheRe)[1].trim();
+        //   target.textContent = data[key];
+        // }
+        // if (target.children && target.children.length) {
+        //   const attrs = Array.from(target.children[0].attributes);
+        //   attrs.forEach((attr) => {
+        //     if (attr.name.includes("v-bind:")) {
+        //       const key = attr.name.split(":")[1];
+        //       const valKey = attr.value;
+        //       target.children[0].setAttribute(key, data[valKey]);
+        //     }
+        //   });
+        // }
+    }
+
+    var app = new Vue({
+        el: "#app",
+        data: {
+            message: "Hello World!",
+            msg: "haha",
+        },
+    });
+    var app2 = new Vue({
+        el: "#app-2",
+        data: {
+            message: "页面加载于 " + new Date().toLocaleString(),
+        },
+    });
+    var app3 = new Vue({
+        el: "#app-3",
+        data: {
+            seen: false,
+        },
+    });
+</script>
+</html>
